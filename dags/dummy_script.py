@@ -37,4 +37,4 @@ with DAG(
         task_id='end'
     )
 
-    start_task >> hello_task >> end_task
+    start_task >> print_hello_world_task >> end_task

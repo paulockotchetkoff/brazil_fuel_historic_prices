@@ -4,8 +4,8 @@ on:
     branches: [ main ]
     paths:
       - 'dags/**'
-      - 'plugins/**'
-      - 'include/**'
+      # - 'plugins/**'
+      # - 'include/**'
 
 jobs:
   sync-dags:

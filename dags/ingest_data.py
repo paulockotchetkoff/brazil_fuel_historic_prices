@@ -16,7 +16,6 @@ def upload_to_gcs(bucket_name, object_name, data):
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
     
-    print('starting upload')
     blob.upload_from_string(data)
         
     print(f'Uploaded {object_name} to {bucket_name}')
@@ -30,11 +29,8 @@ def download_fuel_data():
 
             response = requests.get(BASE_URL.format(year, semester), stream=True)
             response.raise_for_status()
-            print('response is ok')
             
             upload_to_gcs(PIPELINE_BUCKET, output_file_name, response.content)
-            break
-        break
 
     return 'Data successfully stored in GCS'
 

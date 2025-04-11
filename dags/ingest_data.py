@@ -18,7 +18,7 @@ def upload_to_gcs(bucket_name, object_name, response):
     
     # blob.upload_from_string(data)
     with blob.open('wb') as gcs_file:
-        for chunk in response.iter_content(chunk_size=8*1024*1024):
+        for chunk in response.iter_content(chunk_size=8192):
             gcs_file.write(chunk)
         
     print(f'Uploaded {object_name} to {bucket_name}')

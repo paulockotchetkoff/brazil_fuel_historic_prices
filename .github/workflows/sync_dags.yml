@@ -4,6 +4,7 @@ on:
     branches: [ main ]
     paths:
       - 'dags/**'
+      - 'spark_jobs/**'
 
 jobs:
   sync-dags:
@@ -28,6 +29,10 @@ jobs:
       run: |
         gsutil -m rsync -r -d ./dags/ gs://${{ secrets.COMPOSER_BUCKET }}/dags/
 
+    - name: Sync Spark Jobs
+      run: |
+        gsutil -m rsync -r -d ./spark_jobs/ gs://${{ secrets.PIPELINE_BUCKET }}/spark_jobs/
+
     - name: Notify on failure
       if: ${{ failure() }}
       uses: actions/github-script@v6
@@ -39,11 +44,3 @@ jobs:
             repo: context.repo.repo,
             body: "⚠️ DAG sync failed! Check workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           })
-
-# push -> paths:
-# - 'plugins/**'
-# - 'include/**'
-
-# jobs -> sync-dgas -> steps
-# gsutil -m rsync -r -d ./plugins/ gs://${{ secrets.COMPOSER_BUCKET }}/plugins/
-# gsutil -m rsync -r -d ./include/ gs://${{ secrets.COMPOSER_BUCKET }}/include/

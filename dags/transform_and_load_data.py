@@ -1,50 +1,33 @@
 from datetime import datetime
-import os
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from pyspark.sql import SparkSession
-
-
-PROJECT_ID = os.environ['GCP_PROJECT_ID']
-PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
-BQ_DATASET_ID = os.environ['BQ_DATASET_ID']
-
-GCS_CSV_FILE = f'gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv.csv'
-TABLE_ID = 'testing_pyspark'
-
-
-def spark_read_and_write():
-    spark = SparkSession.builder \
-        .appName('test_spark') \
-        .config('spark.jars.packages', 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2') \
-        .getOrCreate()
-
-    df = spark.read.csv(GCS_CSV_FILE, header=True, inferSchema=True)
-    
-    df.write \
-      .format('bigquery') \
-      .option('table', f'{PROJECT_ID}.{BQ_DATASET_ID}.{TABLE_ID}') \
-      .mode('overwrite') \
-      .save()
-
-    spark.stop()
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2025, 1, 1),
+    'start_date': datetime(2024, 1, 1),
+    'retries': 2
 }
 
 with DAG(
-    'simple_pyspark_bq_test_env_vars',
+    'testing_spark',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
 ) as dag:
 
-    spark_task = PythonOperator(
-        task_id='spark_read_and_write_task',
-        python_callable=spark_read_and_write,
-        dag=dag,
+    spark_job = SparkSubmitOperator(
+        task_id='process_fuel_prices',
+        application="gs://{{ var.value.PIPELINE_BUCKET }}/spark_jobs/bq_test.py",
+        conn_id='spark_default',
+        conf={
+            'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2',
+            'spark.hadoop.fs.gs.impl': 'com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem',
+            'spark.hadoop.fs.gs.auth.service.account.enable': 'true'
+        },
+        env_vars={
+            'INPUT_PATH': 'gs://{{ var.value.PIPELINE_BUCKET }}/fuel_prices_2004_01.csv',
+            'BQ_TABLE': '{{ var.value.GCP_PROJECT_ID }}.{{ var.value.BQ_DATASET_ID }}.test'
+        }
     )

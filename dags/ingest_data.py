@@ -77,6 +77,9 @@ def download_fuel_data():
                     os.unlink(tmp_file_path)
                 continue
 
+            break
+        break
+
     return 'Data successfully stored in GCS'
 
 

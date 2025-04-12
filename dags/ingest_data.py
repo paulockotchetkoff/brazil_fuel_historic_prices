@@ -50,10 +50,10 @@ def download_with_retry(url, max_retries=3):
 
 def download_fuel_data():
     current_year = datetime.now().year
-    for year in range(2005, current_year + 1):
+    for year in range(2004, current_year + 1):
         for semester in ['01', '02']:
             url = BASE_URL.format(year, semester)
-            output_file_name = f'{year}-{semester}.csv'
+            output_file_name = f'fuel_prices_{year}_{semester}.csv'
 
             try:
                 tmp_file_path = download_with_retry(url)
@@ -64,9 +64,6 @@ def download_fuel_data():
                 if os.path.exists(tmp_file_path):
                     os.unlink(tmp_file_path)
                 continue
-
-            break
-        break
 
     return 'Data successfully stored in GCS'
 

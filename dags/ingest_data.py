@@ -14,6 +14,14 @@ PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
 BASE_URL = 'https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos/shpc/dsas/ca/ca-{0}-{1}.csv'
 
 
+def check_file_exists(bucket_name, object_name):
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+    
+    return blob.exists()
+
+
 def upload_from_temp_file(bucket_name, object_name, temp_file_path):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
@@ -54,6 +62,10 @@ def download_fuel_data():
         for semester in ['01', '02']:
             url = BASE_URL.format(year, semester)
             output_file_name = f'fuel_prices_{year}_{semester}.csv'
+
+            if check_file_exists(PIPELINE_BUCKET, output_file_name):
+                print(f'File {output_file_name} already exists in GCS, skipping download.')
+                continue
 
             try:
                 tmp_file_path = download_with_retry(url)

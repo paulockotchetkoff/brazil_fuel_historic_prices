@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator
+from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
 
 PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
@@ -22,38 +22,35 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    spark_job = DataprocSubmitJobOperator(
-        task_id="pyspark_task",
-        job={
-            "reference": {"project_id": GCP_PROJECT_ID},
-            "placement": {"cluster_name": ""},
-            "pyspark_job": {"main_python_file_uri": f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py'},
-        },
+    spark_batch = DataprocCreateBatchOperator(
+        task_id='process_fuel_prices',
+        project_id=GCP_PROJECT_ID,
         region=REGION,
-        project_id=GCP_PROJECT_ID
+        batch_id=f'fuel-prices-batch-{datetime.now().strftime("%Y%m%d%H%M%S")}',
+        batch={
+            'pyspark_batch': {
+                'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
+                'args': [
+                    f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
+                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
+                    f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
+                ],
+                'jar_file_uris': [
+                    'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
+                ],
+            },
+            'runtime_config': {
+                'version': '2.1',
+                'properties': {
+                    'spark.submit.deployMode': 'cluster',
+                    'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
+                }
+            },
+            'environment_config': {
+                'execution_config': {
+                    'service_account': '<YOUR_SERVICE_ACCOUNT>',  # Optional
+                    'subnetwork_uri': '<SUBNET>'  # Optional; needed for VPC
+                }
+            }
+        }
     )
-
-# task_id='process_fuel_prices',
-#         project_id=GCP_PROJECT_ID,
-#         region=REGION,
-#         job={
-#             'reference': {'job_id': f'fuel-prices-job-{datetime.now().strftime("%Y%m%d%H%M%S")}'},
-#             'spark_batch': {
-#                 'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
-#                 'args': [
-#                     f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
-#                     f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
-#                     f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
-#                 ],
-#                 'jar_file_uris': [
-#                     'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
-#                 ],
-#                 'runtime_config': {
-#                     'version': '2.1',
-#                     'properties': {
-#                         'spark.submit.deployMode': 'cluster',
-#                         'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
-#                     }
-#                 }
-#             }
-#         }

@@ -45,7 +45,9 @@ with models.DAG(
                 'version': '2.1',
                 'properties': {
                     'spark.sql.execution.arrow.pyspark.enabled': 'true',
-                    'spark.dataproc.executor.machineType': 'n1-standard-2'
+                    # 'spark.dataproc.executor.machineType': 'n1-standard-2'
+                    'spark.dynamicAllocation.enabled': 'true',
+                    'spark.dynamicAllocation.maxExecutors': '4'
                 }
             },
             'environment_config': {

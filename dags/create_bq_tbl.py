@@ -17,7 +17,7 @@ from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOpera
 GOOGLE_CONN_ID = 'google_cloud_default'
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
 PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
-CLUSTER_NAME = 'test_cluster'
+CLUSTER_NAME = 'test-cluster'
 REGION = 'us-central1'
 PYSPARK_URI = f'gs://{os.environ["PIPELINE_BUCKET"]}/spark_jobs/bq_test.py'
 

@@ -39,7 +39,7 @@ CLUSTER_CONFIG = ClusterGenerator(
 ).make()
 
 default_args = {
-    'owner': 'Ilham Putra',
+    'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,

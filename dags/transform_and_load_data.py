@@ -1,13 +1,37 @@
-from datetime import datetime 
+from datetime import timedelta, datetime
 import os
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
+from airflow import models
+from airflow.providers.google.cloud.operators.dataproc import (
+    DataprocCreateClusterOperator,
+    DataprocSubmitJobOperator,
+    DataprocDeleteClusterOperator
+)
 
 PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
 BQ_DATASET_ID = os.environ['BQ_DATASET_ID']
 REGION = os.environ['GCP_REGION']
+
+CLUSTER_CONFIG = {
+    "master_config": {"num_instances": 1, "machine_type_uri": "n1-standard-4"},
+    "worker_config": {"num_instances": 2, "machine_type_uri": "n1-standard-4"}
+}
+
+PYSPARK_JOB = {
+    "reference": {"project_id": GCP_PROJECT_ID},
+    "placement": {"cluster_name": "test-cluster"},
+    "pyspark_job": {
+        "main_python_file_uri": f"gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py",
+        "jar_file_uris": ["gs://spark-lib/bigquery/spark-bigquery-latest.jar"]
+    },
+    'environment_config': {
+                'execution_config': {
+                    'service_account': 'composer-worker-sa@brazil-fuel-prices.iam.gserviceaccount.com',
+                }
+            }
+}
 
 default_args = {
     'owner': 'airflow',
@@ -16,40 +40,29 @@ default_args = {
 }
 
 with DAG(
-    'fuel_prices_processing',
-    default_args=default_args,
+    "another_test",
     schedule_interval=None,
-    catchup=False,
 ) as dag:
 
-    spark_batch = DataprocCreateBatchOperator(
-        task_id='process_fuel_prices',
+    create_cluster = DataprocCreateClusterOperator(
+        task_id="create_cluster",
+        cluster_name="pyspark-cluster",
         project_id=GCP_PROJECT_ID,
         region=REGION,
-        batch_id=f'fuel-prices-batch-{datetime.now().strftime("%Y%m%d%H%M%S")}',
-        batch={
-            'pyspark_batch': {
-                'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
-                'args': [
-                    f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
-                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
-                    f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
-                ],
-                'jar_file_uris': [
-                    'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
-                ],
-            },
-            'runtime_config': {
-                'version': '2.2',
-                'properties': {
-                    'spark.sql.catalogImplementation': 'hive',
-                    'spark.sql.legacy.parquet.datetimeRebaseModeInWrite': 'CORRECTED'
-                }
-            },
-            'environment_config': {
-                'execution_config': {
-                    'service_account': 'composer-worker-sa@brazil-fuel-prices.iam.gserviceaccount.com',
-                }
-            }
-        }
+        cluster_config=CLUSTER_CONFIG
     )
+
+    submit_job = DataprocSubmitJobOperator(
+        task_id="run_pyspark",
+        job=PYSPARK_JOB,
+        region=REGION
+    )
+
+    delete_cluster = DataprocDeleteClusterOperator(
+        task_id="delete_cluster",
+        cluster_name="pyspark-cluster",
+        project_id=GCP_PROJECT_ID,
+        region=REGION
+    )
+
+    create_cluster >> submit_job >> delete_cluster

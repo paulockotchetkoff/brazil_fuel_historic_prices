@@ -15,7 +15,6 @@ def main():
         .config('spark.sql.execution.arrow.pyspark.enabled', 'true') \
         .getOrCreate()
 
-    # Read CSV with error handling
     df = spark.read \
         .options(
             delimiter=';',

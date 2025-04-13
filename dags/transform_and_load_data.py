@@ -45,9 +45,15 @@ with models.DAG(
                 'version': '2.1',
                 'properties': {
                     'spark.sql.execution.arrow.pyspark.enabled': 'true',
-                    'spark.executor.instances': '4',
-                    'spark.executor.memory': '8g',
-                    'spark.driver.memory': '4g'
+                    # Resource settings
+                    'spark.executor.instances': '2',
+                    'spark.executor.cores': '2',
+                    'spark.executor.memory': '4g',
+                    'spark.driver.memory': '2g',
+                    'spark.driver.cores': '2',
+                    # Disk configuration
+                    'spark.dataproc.driver.disk.size': '200',
+                    'spark.dataproc.executor.disk.size': '200'
                 }
             },
             'environment_config': {

@@ -46,5 +46,10 @@ with DAG(
                     'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
                 }
             },
+            'environment_config': {
+                'execution_config': {
+                    'service_account': 'composer-worker-sa@brazil-fuel-prices.iam.gserviceaccount.com',
+                }
+            }
         }
     )

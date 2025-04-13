@@ -28,12 +28,7 @@ with DAG(
         region=REGION,
         job={
             'reference': {'job_id': f'fuel-prices-job-{datetime.now().strftime("%Y%m%d%H%M%S")}'},
-            'placement': {
-                'managed_cluster': {
-                    'cluster_name': ''
-                }
-            },
-            'pyspark_job': {
+            'spark_batch': {
                 'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
                 'args': [
                     f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
@@ -43,9 +38,12 @@ with DAG(
                 'jar_file_uris': [
                     'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
                 ],
-                'properties': {
-                    'spark.submit.deployMode': 'cluster',
-                    'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
+                'runtime_config': {
+                    'version': '2.1',
+                    'properties': {
+                        'spark.submit.deployMode': 'cluster',
+                        'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
+                    }
                 }
             }
         }

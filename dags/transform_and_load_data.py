@@ -46,11 +46,5 @@ with DAG(
                     'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
                 }
             },
-            'environment_config': {
-                'execution_config': {
-                    'service_account': '<YOUR_SERVICE_ACCOUNT>',  # Optional
-                    'subnetwork_uri': '<SUBNET>'  # Optional; needed for VPC
-                }
-            }
         }
     )

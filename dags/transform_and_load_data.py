@@ -7,7 +7,7 @@ from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobO
 PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
 BQ_DATASET_ID = os.environ['BQ_DATASET_ID']
-REGION = os.environ['GCP_REGION']
+REGION = os.environ['REGION']
 
 default_args = {
     'owner': 'airflow',

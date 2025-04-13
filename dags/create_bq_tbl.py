@@ -12,7 +12,7 @@ from airflow.providers.google.cloud.operators.dataproc import (
 )
 from airflow.providers.google.cloud.sensors.dataproc import DataprocJobSensor
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+# from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 
 GOOGLE_CONN_ID = 'google_cloud_default'
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']

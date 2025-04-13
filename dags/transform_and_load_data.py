@@ -40,7 +40,7 @@ with DAG(
                 ],
             },
             'runtime_config': {
-                'version': '2.1',
+                'version': '2.2',
                 'properties': {
                     'spark.sql.catalogImplementation': 'hive',
                     'spark.sql.legacy.parquet.datetimeRebaseModeInWrite': 'CORRECTED'

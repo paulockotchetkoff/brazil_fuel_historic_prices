@@ -53,7 +53,7 @@ with models.DAG(
             'environment_config': {
                 'execution_config': {
                     'service_account': SERVICE_ACCOUNT,
-                    'service_account_scopes': ['https://www.googleapis.com/auth/cloud-platform']
+                    # 'service_account_scopes': ['https://www.googleapis.com/auth/cloud-platform']
                 }
             }
         },

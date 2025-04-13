@@ -57,7 +57,7 @@ with models.DAG(
                 }
             }
         },
-        batch_id=f'bq-load-{datetime.now().strftime('%Y%m%d-%H%M%S')}',
+        batch_id=f'bq-load-{datetime.now().strftime("%Y%m%d-%H%M%S")}',
         # timeout=3600
     )
 

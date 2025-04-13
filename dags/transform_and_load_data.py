@@ -28,18 +28,18 @@ with DAG(
         region=REGION,
         job={
             'reference': {'job_id': 'fuel-prices-job-{{ ds_nodash }}'},
-            'placement': {'cluster_name': ''},  # Serverless
-            'spark_job': {
+            'placement': {'cluster_name': ''},
+            'pyspark_job': {
                 'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
                 'args': [
                     f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
-                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test_tbl',
-                    f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'  # From Terraform
+                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
+                    f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
                 ],
-                'jar_file_uris': ['gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar'],
+                'python_file_uris': ['gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar'],
                 'properties': {
                     'spark.submit.deployMode': 'cluster',
-                    'spark.sql.legacy.timeParserPolicy': 'LEGACY'  # For datetime parsing
+                    'spark.sql.legacy.timeParserPolicy': 'LEGACY'
                 }
             }
         }

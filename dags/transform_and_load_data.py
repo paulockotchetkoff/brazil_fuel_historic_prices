@@ -23,28 +23,37 @@ with DAG(
 ) as dag:
 
     spark_job = DataprocSubmitJobOperator(
-        task_id='process_fuel_prices',
-        project_id=GCP_PROJECT_ID,
-        region=REGION,
+        task_id="pyspark_task",
         job={
-            'reference': {'job_id': f'fuel-prices-job-{datetime.now().strftime("%Y%m%d%H%M%S")}'},
-            'spark_batch': {
-                'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
-                'args': [
-                    f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
-                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
-                    f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
-                ],
-                'jar_file_uris': [
-                    'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
-                ],
-                'runtime_config': {
-                    'version': '2.1',
-                    'properties': {
-                        'spark.submit.deployMode': 'cluster',
-                        'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
-                    }
-                }
-            }
-        }
+            "reference": {"project_id": GCP_PROJECT_ID},
+            "placement": {"cluster_name": ""},
+            "pyspark_job": {"main_python_file_uri": f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py'},
+        },
+        region=REGION,
+        project_id=GCP_PROJECT_ID
     )
+
+# task_id='process_fuel_prices',
+#         project_id=GCP_PROJECT_ID,
+#         region=REGION,
+#         job={
+#             'reference': {'job_id': f'fuel-prices-job-{datetime.now().strftime("%Y%m%d%H%M%S")}'},
+#             'spark_batch': {
+#                 'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
+#                 'args': [
+#                     f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
+#                     f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
+#                     f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
+#                 ],
+#                 'jar_file_uris': [
+#                     'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
+#                 ],
+#                 'runtime_config': {
+#                     'version': '2.1',
+#                     'properties': {
+#                         'spark.submit.deployMode': 'cluster',
+#                         'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
+#                     }
+#                 }
+#             }
+#         }

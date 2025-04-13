@@ -42,8 +42,8 @@ with DAG(
             'runtime_config': {
                 'version': '2.1',
                 'properties': {
-                    'spark.submit.deployMode': 'cluster',
-                    'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
+                    'spark.sql.catalogImplementation': 'hive',
+                    'spark.sql.legacy.parquet.datetimeRebaseModeInWrite': 'CORRECTED'
                 }
             },
             'environment_config': {

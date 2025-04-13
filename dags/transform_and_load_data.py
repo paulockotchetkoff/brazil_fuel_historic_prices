@@ -16,7 +16,12 @@ REGION = os.environ['GCP_REGION']
 
 CLUSTER_CONFIG = {
     "master_config": {"num_instances": 1, "machine_type_uri": "n1-standard-4"},
-    "worker_config": {"num_instances": 2, "machine_type_uri": "n1-standard-4"}
+    "worker_config": {"num_instances": 2, "machine_type_uri": "n1-standard-4"},
+    'environment_config': {
+                'execution_config': {
+                    'service_account': 'composer-worker-sa@brazil-fuel-prices.iam.gserviceaccount.com',
+                }
+            }
 }
 
 PYSPARK_JOB = {

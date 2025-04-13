@@ -28,20 +28,24 @@ with DAG(
         region=REGION,
         job={
             'reference': {'job_id': f'fuel-prices-job-{datetime.now().strftime("%Y%m%d%H%M%S")}'},
-            'spark_batch': {  # Changed from pyspark_job to spark_batch
+            'placement': {
+                'managed_cluster': {
+                    'cluster_name': ''
+                }
+            },
+            'pyspark_job': {
                 'main_python_file_uri': f'gs://{PIPELINE_BUCKET}/spark_jobs/bq_test.py',
                 'args': [
                     f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
                     f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
                     f'--temp_bucket={GCP_PROJECT_ID}-spark-temp'
                 ],
-                'jar_files': ['gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'],
-                'runtime_config': {
-                    'version': '2.1',  # Dataproc Serverless version
-                    'properties': {
-                        'spark.submit.deployMode': 'cluster',
-                        'spark.sql.legacy.timeParserPolicy': 'LEGACY'
-                    }
+                'jar_file_uris': [
+                    'gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar'
+                ],
+                'properties': {
+                    'spark.submit.deployMode': 'cluster',
+                    'spark.jars.packages': 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.2'
                 }
             }
         }

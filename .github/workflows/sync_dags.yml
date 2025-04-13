@@ -1,4 +1,4 @@
-name: Sync Airflow DAGs to GCP Composer
+name: Sync Airflow DAGs to GCP Composer 
 on:
   push:
     branches: [ main ]

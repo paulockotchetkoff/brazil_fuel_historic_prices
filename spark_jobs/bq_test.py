@@ -1,4 +1,6 @@
-import argparse
+import argparse 
+import logging
+
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
@@ -10,11 +12,18 @@ def main():
     parser.add_argument('--temp_bucket', required=True)
     args = parser.parse_args()
 
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO)
+
+    logger.info('Initializing Spark session')
     spark = SparkSession.builder \
         .appName('testing-pyspark') \
         .config('spark.sql.execution.arrow.pyspark.enabled', 'true') \
         .getOrCreate()
+    
+    logger.info(f'Spark version: {spark.version}')
 
+    logger.info(f'Attempting to read: {args.input_path}')
     df = spark.read \
         .options(
             delimiter=';',
@@ -24,14 +33,17 @@ def main():
             dateFormat='dd/MM/yyyy'
         ) \
         .csv(args.input_path)
-    print(f'Total records: {df.count()}')
+    
+    logger.info('CSV read successful')
 
-
+    logger.info(f'Writing to BigQuery table: {args.bq_table}')
     df.write.format('bigquery') \
         .option('table', args.bq_table) \
         .option('temporaryGcsBucket', args.temp_bucket) \
         .mode('overwrite') \
         .save()
+    
+    logger.info('Write to BigQuery completed successfully')
 
 if __name__ == '__main__':
     main()

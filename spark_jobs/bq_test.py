@@ -24,15 +24,16 @@ def main():
     logger.info(f'Spark version: {spark.version}')
 
     logger.info(f'Attempting to read: {args.input_path}')
-    df = spark.read \
-        .options(
-            delimiter=';',
-            header=True,
-            inferSchema=True,
-            encoding='UTF-8',
-            dateFormat='dd/MM/yyyy'
-        ) \
-        .csv(args.input_path)
+    # df = spark.read \
+    #     .options(
+    #         delimiter=';',
+    #         header=True,
+    #         inferSchema=True,
+    #         encoding='UTF-8',
+    #         dateFormat='dd/MM/yyyy'
+    #     ) \
+    #     .csv(args.input_path)
+    df = spark.read.option('header', 'true').option('sep', ';').csv(args.input_path)
     
     logger.info('CSV read successful')
 

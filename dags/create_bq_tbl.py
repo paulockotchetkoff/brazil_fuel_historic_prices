@@ -1,81 +1,65 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 import os
 
-from airflow import DAG 
+from airflow import models
+from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
 from airflow.utils.dates import days_ago
-from airflow.operators.dummy_operator import DummyOperator
-from airflow.providers.google.cloud.operators.dataproc import (
-    DataprocCreateClusterOperator,
-    DataprocDeleteClusterOperator,
-    DataprocSubmitJobOperator,
-    ClusterGenerator
-)
-from airflow.providers.google.cloud.sensors.dataproc import DataprocJobSensor
-from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
-# from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 
-GOOGLE_CONN_ID = 'google_cloud_default'
+BQ_DATASET_ID = os.environ['BQ_DATASET_ID']
+BQ_JAR = 'gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar'
 GCP_PROJECT_ID = os.environ['GCP_PROJECT_ID']
 PIPELINE_BUCKET = os.environ['PIPELINE_BUCKET']
-CLUSTER_NAME = 'test-cluster'
-REGION = 'us-central1'
-PYSPARK_URI = f'gs://{os.environ["PIPELINE_BUCKET"]}/spark_jobs/bq_test.py'
+PYSPARK_SCRIPT = f'gs://{os.environ["PIPELINE_BUCKET"]}/spark_jobs/bq_test.py'
+REGION = os.environ['GCP_REGION']
+SERVICE_ACCOUNT = 'composer-worker-sa@brazil-fuel-prices.iam.gserviceaccount.com'
 
-PYSPARK_JOB = {
-    "reference": {"project_id": GCP_PROJECT_ID},
-    "placement": {"cluster_name": CLUSTER_NAME},
-    "pyspark_job": {"main_python_file_uri": PYSPARK_URI},
-}
+with models.DAG(
+    'bq_csv_processing',
+    schedule_interval=None,
+    start_date=days_ago(1),
+    catchup=False,
+    default_args={
+        'owner': 'airflow',
+        'depends_on_past': False,
+        'email_on_failure': False,
+        'retries': 1,
+    },
+    tags=['pyspark', 'bigquery'],
+) as dag:
 
-CLUSTER_CONFIG = ClusterGenerator(
-    project_id=GCP_PROJECT_ID,
-    zone="us-central1-a",
-    master_machine_type="n1-standard-2",
-    worker_machine_type="n1-standard-2",
-    num_workers=2,
-    worker_disk_size=300,
-    master_disk_size=300,
-    storage_bucket=PIPELINE_BUCKET,
-).make()
-
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 5,
-    'start_date':  days_ago(2),
-    'retry_delay': timedelta(minutes=5),
-}
-
-
-with DAG('SparkETL', schedule_interval='@once', default_args=default_args) as dag:
-    start_pipeline = DummyOperator(
-        task_id = 'start_pipeline',
-        dag = dag
-        )
-    create_cluster = DataprocCreateClusterOperator(
-        task_id="create_cluster",
+    spark_task = DataprocCreateBatchOperator(
+        task_id='csv_to_bigquery',
         project_id=GCP_PROJECT_ID,
-        cluster_config=CLUSTER_CONFIG,
         region=REGION,
-        cluster_name=CLUSTER_NAME,
-    )
-    pyspark_task = DataprocSubmitJobOperator(
-        task_id="pyspark_task", 
-        job=PYSPARK_JOB, 
-        region=REGION, 
-        project_id=GCP_PROJECT_ID,
-    )
-    delete_cluster = DataprocDeleteClusterOperator(
-        task_id="delete_cluster", 
-        project_id=GCP_PROJECT_ID, 
-        cluster_name=CLUSTER_NAME, 
-        region=REGION,
-    )
-    finish_pipeline = DummyOperator(
-        task_id = 'finish_pipeline',
-        dag = dag
+        batch={
+            'pyspark_batch': {
+                'main_python_file_uri': PYSPARK_SCRIPT,
+                'jar_file_uris': [BQ_JAR],
+                'args': [
+                    f'--input_path=gs://{PIPELINE_BUCKET}/fuel_prices_2004_01.csv',
+                    f'--bq_table={GCP_PROJECT_ID}.{BQ_DATASET_ID}.test',
+                    f'--temp_bucket={PIPELINE_BUCKET}-spark-temp'
+                ]
+            },
+            'runtime_config': {
+                'version': '2.1',
+                'properties': {
+                    'spark.sql.execution.arrow.pyspark.enabled': 'true',
+                    'spark.dataproc.executor.machineType': 'n1-standard-1',
+                    'spark.dataproc.driver.machineType': 'n1-standard-1'
+                    # 'spark.dynamicAllocation.enabled': 'true',
+                    # 'spark.dynamicAllocation.maxExecutors': '4'
+                }
+            },
+            'environment_config': {
+                'execution_config': {
+                    'service_account': SERVICE_ACCOUNT,
+                    # 'service_account_scopes': ['https://www.googleapis.com/auth/cloud-platform']
+                }
+            }
+        },
+        batch_id=f'bq-load-{datetime.now().strftime("%Y%m%d-%H%M%S")}',
+        # timeout=3600
     )
 
-start_pipeline >> create_cluster >> pyspark_task >> delete_cluster >> finish_pipeline
+    spark_task

@@ -34,7 +34,7 @@ def main():
     #         dateFormat='dd/MM/yyyy'
     #     ) \
     #     .csv(args.input_path)
-    df = spark.read.option('header', 'true').option('sep', ';').csv(args.input_path)
+    df = spark.read.option('header', 'true').option('sep', ',').csv('taxi_zone_lookup')
     
     logger.info('CSV read successful')
 

@@ -42,7 +42,7 @@ with models.DAG(
                 ]
             },
             'runtime_config': {
-                'version': '2.1',
+                # 'version': '2.1',
                 'properties': {
                     'spark.sql.execution.arrow.pyspark.enabled': 'true',
                     'spark.dataproc.executor.machineType': 'n1-standard-2',

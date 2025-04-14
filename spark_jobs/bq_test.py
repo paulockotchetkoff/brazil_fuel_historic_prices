@@ -24,6 +24,7 @@ def main():
             dateFormat='dd/MM/yyyy'
         ) \
         .csv(args.input_path)
+    print(f'Total records: {df.count()}')
 
 
     df.write.format('bigquery') \

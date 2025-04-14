@@ -18,6 +18,7 @@ def main():
     logger.info('Initializing Spark session')
     spark = SparkSession.builder \
         .appName('testing-pyspark') \
+        .config('spark.jars.packages', 'com.google.cloud.spark:spark-bigquery-with-dependencies_2.12:0.32.0') \
         .config('spark.sql.execution.arrow.pyspark.enabled', 'true') \
         .getOrCreate()
     
